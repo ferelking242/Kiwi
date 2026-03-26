@@ -1,0 +1,245 @@
+# Build Kiwi Browser APK for arm64 (armv8) only
+name: 'Build APK arm64 (armv8)'
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - kiwi
+
+concurrency:
+  group: build-arm64
+  cancel-in-progress: true
+
+env:
+  CHROMIUM_SRC: /home/runner/chromium/src
+
+jobs:
+  build:
+    name: Build arm64 APK
+    runs-on: ubuntu-22.04
+    timeout-minutes: 360
+
+    steps:
+      # ----------------------------------------------------------------
+      # 1. Reclaim as much disk space as possible
+      # ----------------------------------------------------------------
+      - name: Free disk space
+        run: |
+          sudo swapoff -av || true
+          sudo rm -f /swapfile
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift
+          sudo apt-get clean
+          df -h
+
+      - name: Create extra swap (8 GB)
+        run: |
+          sudo fallocate -l 8G /swapfile2
+          sudo chmod 600 /swapfile2
+          sudo mkswap /swapfile2
+          sudo swapon /swapfile2
+          free -h
+
+      # ----------------------------------------------------------------
+      # 2. Install system build dependencies
+      # ----------------------------------------------------------------
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            git curl wget python3 python3-pip \
+            lsb-release sudo file xz-utils \
+            ccache openjdk-11-jdk-headless \
+            libncurses5 libtinfo5 pkg-config \
+            zip unzip bzip2
+
+      # ----------------------------------------------------------------
+      # 3. Set up ccache
+      # ----------------------------------------------------------------
+      - name: Configure ccache
+        run: |
+          ccache --max-size=8G
+          ccache --set-config=compression=true
+
+      - name: Restore ccache cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-arm64-${{ github.sha }}
+          restore-keys: |
+            ccache-arm64-
+
+      # ----------------------------------------------------------------
+      # 4. Check out THIS Kiwi fork (contains Kiwi patches only)
+      # ----------------------------------------------------------------
+      - name: Check out Kiwi fork
+        uses: actions/checkout@v4
+        with:
+          path: kiwi_patches
+
+      # ----------------------------------------------------------------
+      # 5. Read Chromium version
+      # ----------------------------------------------------------------
+      - name: Read Chromium version
+        id: chromium_version
+        run: |
+          source $GITHUB_WORKSPACE/kiwi_patches/CHROMIUM_VERSION
+          VERSION="${CHROMIUM_MAJOR}.${CHROMIUM_MINOR}.${CHROMIUM_BUILD}.${CHROMIUM_PATCH}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Chromium version: ${VERSION}"
+
+      # ----------------------------------------------------------------
+      # 6. Fetch depot_tools
+      # ----------------------------------------------------------------
+      - name: Clone depot_tools
+        run: |
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            $HOME/depot_tools
+          echo "$HOME/depot_tools" >> $GITHUB_PATH
+
+      # ----------------------------------------------------------------
+      # 7. Configure gclient and fetch full Chromium source (Android)
+      # ----------------------------------------------------------------
+      - name: Configure gclient
+        run: |
+          mkdir -p /home/runner/chromium
+          cat > /home/runner/chromium/.gclient << EOF
+solutions = [
+  {
+    "url": "https://chromium.googlesource.com/chromium/src.git@${{ steps.chromium_version.outputs.version }}",
+    "managed": False,
+    "name": "src",
+    "custom_deps": {},
+    "custom_vars": {
+      "checkout_android": True,
+    },
+  },
+]
+target_os = ["android"]
+EOF
+          cat /home/runner/chromium/.gclient
+
+      - name: Fetch Chromium source (shallow)
+        run: |
+          cd /home/runner/chromium
+          export PATH="$HOME/depot_tools:$PATH"
+          fetch --nohooks --no-history android
+          df -h
+
+      - name: gclient sync
+        run: |
+          cd ${{ env.CHROMIUM_SRC }}
+          export PATH="$HOME/depot_tools:$PATH"
+          gclient sync --nohooks --no-history -D
+          df -h
+
+      - name: gclient runhooks
+        run: |
+          cd ${{ env.CHROMIUM_SRC }}
+          export PATH="$HOME/depot_tools:$PATH"
+          gclient runhooks
+
+      # ----------------------------------------------------------------
+      # 8. Apply Kiwi patches on top of Chromium
+      # ----------------------------------------------------------------
+      - name: Apply Kiwi patches
+        run: |
+          KIWI=$GITHUB_WORKSPACE/kiwi_patches
+          DST=${{ env.CHROMIUM_SRC }}
+          for dir in base chrome components content extensions net remoting services third_party toolbox ui; do
+            if [ -d "$KIWI/$dir" ]; then
+              echo "-> Applying $dir"
+              cp -rf "$KIWI/$dir/." "$DST/$dir/"
+            fi
+          done
+          echo "All Kiwi patches applied."
+
+      # ----------------------------------------------------------------
+      # 9. Install Android build dependencies
+      # ----------------------------------------------------------------
+      - name: Install Android build dependencies
+        run: |
+          cd ${{ env.CHROMIUM_SRC }}
+          export PATH="$HOME/depot_tools:$PATH"
+          ./build/install-build-deps-android.sh
+
+      # ----------------------------------------------------------------
+      # 10. Generate signing keystore
+      # ----------------------------------------------------------------
+      - name: Generate keystore
+        run: |
+          keytool -genkey -v \
+            -keystore ${{ env.CHROMIUM_SRC }}/keystore.jks \
+            -alias dev \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass public_password -keypass public_password \
+            -dname "cn=Kiwi Browser Fork, ou=Actions, o=${{ github.repository_owner }}, c=GitHub"
+
+      # ----------------------------------------------------------------
+      # 11. Set up args.gn for arm64
+      # ----------------------------------------------------------------
+      - name: Set up args.gn
+        run: |
+          mkdir -p ${{ env.CHROMIUM_SRC }}/out/android_arm64
+          BUILD_DATE=$(date '+%y%m%d')
+          RUN_ID="${{ github.run_id }}"
+          sed \
+            -e "s|android_default_version_name = \"Git\"|android_default_version_name = \"Git${BUILD_DATE}Gen${RUN_ID}\"|" \
+            -e "s|android_default_version_code = \"1\"|android_default_version_code = \"${BUILD_DATE}2\"|" \
+            "$GITHUB_WORKSPACE/kiwi_patches/.build/production_build_reference/args.gn" \
+            > ${{ env.CHROMIUM_SRC }}/out/android_arm64/args.gn
+          echo "--- args.gn ---"
+          cat ${{ env.CHROMIUM_SRC }}/out/android_arm64/args.gn
+
+      # ----------------------------------------------------------------
+      # 12. gn gen
+      # ----------------------------------------------------------------
+      - name: Generate build files (gn gen)
+        run: |
+          cd ${{ env.CHROMIUM_SRC }}
+          export PATH="$HOME/depot_tools:$PATH"
+          gn gen out/android_arm64
+
+      # ----------------------------------------------------------------
+      # 13. Build arm64 APK
+      # ----------------------------------------------------------------
+      - name: Build ChromePublic APK (arm64)
+        run: |
+          cd ${{ env.CHROMIUM_SRC }}
+          export PATH="$HOME/depot_tools:$PATH"
+          export CCACHE_DIR="$HOME/.ccache"
+          autoninja -C out/android_arm64 chrome_public_apk
+
+      - name: Show ccache stats
+        run: ccache -s
+
+      # ----------------------------------------------------------------
+      # 14. Upload APK as artifact
+      # ----------------------------------------------------------------
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kiwi-arm64-${{ github.run_id }}
+          path: ${{ env.CHROMIUM_SRC }}/out/android_arm64/apks/ChromePublic.apk
+          retention-days: 14
+
+      # ----------------------------------------------------------------
+      # 15. Create GitHub release with the APK
+      # ----------------------------------------------------------------
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_id }}
+          name: "Kiwi arm64 – build ${{ github.run_id }}"
+          draft: false
+          prerelease: true
+          generate_release_notes: true
+          files: ${{ env.CHROMIUM_SRC }}/out/android_arm64/apks/ChromePublic.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
