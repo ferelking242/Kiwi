@@ -1,0 +1,56 @@
+# Copyright 2024 Kiwi Browser Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license.
+
+import("//build/config/android/rules.gni")
+
+# -----------------------------------------------------------------------------
+# C++ core library – compiled into chrome on all platforms.
+# -----------------------------------------------------------------------------
+source_set("tab_session_isolation") {
+  sources = [
+    "tab_session_isolation_manager.cc",
+    "tab_session_isolation_manager.h",
+  ]
+
+  deps = [
+    "//base",
+    "//content/public/browser",
+  ]
+}
+
+# -----------------------------------------------------------------------------
+# Android JNI bridge
+# -----------------------------------------------------------------------------
+if (is_android) {
+  source_set("tab_session_isolation_android") {
+    sources = [
+      "android/tab_session_isolation_bridge.cc",
+      "android/tab_session_isolation_bridge.h",
+    ]
+
+    deps = [
+      ":tab_session_isolation",
+      "//base",
+      "//base:base_java_test_support",
+      "//chrome/android:chrome_jni_headers",
+      "//chrome/browser/profiles:profiles",
+      "//chrome/browser/profiles/android:android",
+      "//content/public/browser",
+    ]
+  }
+
+  android_library("tab_session_isolation_java") {
+    sources = [
+      "//chrome/android/java/src/org/chromium/chrome/browser/tab/IsolatedTabCreator.java",
+      "//chrome/android/java/src/org/chromium/chrome/browser/tab/TabObserverForIsolation.java",
+      "//chrome/android/java/src/org/chromium/chrome/browser/tab/TabSessionIsolationBridge.java",
+      "//chrome/android/java/src/org/chromium/chrome/browser/tab/TabSessionIsolationManager.java",
+    ]
+
+    deps = [
+      "//base:base_java",
+      "//chrome/browser/profiles/android:java",
+      "//content/public/android:content_java",
+    ]
+  }
+}
