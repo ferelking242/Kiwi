@@ -951,7 +951,10 @@ if (!is_ios) {
     # dependency. On other platforms, no components should depend on Chrome.
     # Since //chrome depends on //extensions, we also only assert_no_deps on
     # extensions targets for non-lacros builds.
-    if (!is_chromeos_lacros) {
+    # Also skip on Android: extensions/shell is not supported there and
+    # loading //extensions/shell/* patterns triggers assert(!is_android) in
+    # //components/keep_alive_registry/BUILD.gn.
+    if (!is_chromeos_lacros && !is_android) {
       assert_no_deps = [ "//chrome/*" ]
       assert_no_deps += disallowed_extension_deps_
     }
