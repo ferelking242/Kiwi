@@ -159,7 +159,6 @@ static_library("test_support") {
     "//build:chromeos_buildflags",
     "//chrome/common:buildflags",
     "//components/crx_file",
-    "//components/guest_view/browser:test_support",
     "//components/keyed_service/content",
     "//components/pref_registry",
     "//components/prefs:test_support",
@@ -194,6 +193,10 @@ static_library("test_support") {
 
   if (is_chromeos_lacros) {
     deps += [ "//chromeos/lacros:test_support" ]
+  }
+
+  if (!is_android && !is_ios) {
+    deps += [ "//components/guest_view/browser:test_support" ]
   }
 
   public_deps = [ "//content/public/browser" ]
