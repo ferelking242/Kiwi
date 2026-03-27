@@ -274,6 +274,8 @@ if (!is_android && !is_ios) {
 # and these moved to the extensions_browsertests target. Currently, we solve
 # the problem by making this a source set and linking it into
 # //chrome/test:browser_tests.
+# Not supported on Android/iOS: //chrome/browser has assert(is_chromeos) targets.
+if (!is_android && !is_ios) {
 source_set("chrome_extensions_browsertests_sources") {
   testonly = true
   sources = [
@@ -341,3 +343,4 @@ source_set("chrome_extensions_browsertests_sources") {
     deps += [ "//components/user_manager:test_support" ]
   }
 }
+}  # if (!is_android && !is_ios)
