@@ -45,7 +45,10 @@ if (is_ios) {
 
 # Omit Lacros because it allows //components to depend on //chrome, which in
 # turn depends on //extensions.
-if (!is_chromeos_lacros) {
+# Also omit Android: extensions/shell is unsupported there and the wildcard
+# pattern //extensions/shell/* causes GN to load extensions/shell/BUILD.gn,
+# which triggers assert(!is_android) in //components/keep_alive_registry.
+if (!is_chromeos_lacros && !is_android) {
   disallowed_extension_deps_ = [
     # Components should largely not depend on //extensions. Since // extensions
     # is not a component target and is linked with //chrome, depending on most
