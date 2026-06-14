@@ -1,0 +1,17 @@
+# Eterna Browser — Native (C++) build targets
+
+  import("//build/config/android/rules.gni")
+
+  shared_library("eterna_jni") {
+    sources = [ "eterna_jni.cc" ]
+    deps = [
+      "//base",
+      "//base:base_java_unittest_support",
+      "//chrome/browser/profiles",
+      "//chrome/browser/ui/android/tab_model",
+      "//content/public/browser",
+      "//url",
+    ]
+    configs += [ "//build/config/android:hide_all_but_jni_onload" ]
+  }
+  
