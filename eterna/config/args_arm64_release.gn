@@ -1,0 +1,22 @@
+# Eterna Browser — arm64 release build args
+  # Copy to out/eterna_arm64/args.gn before running gn gen
+
+  target_os                              = "android"
+  target_cpu                             = "arm64"
+  is_debug                               = false
+  is_official_build                      = true
+  is_component_build                     = false
+  use_errorprone_java_compiler           = true
+  enable_nacl                            = false
+  chrome_pgo_phase                       = 0
+  android_channel                        = "stable"
+  android_default_version_name           = "1.0.0"
+  android_default_version_code           = "1000000"
+  ffmpeg_branding                        = "Chrome"
+  proprietary_codecs                     = true
+  fieldtrial_testing_like_official_build = true
+
+  # Eterna-specific
+  eterna_package_name                    = "com.aivos.eterna"
+  eterna_app_label                       = "Eterna"
+  
