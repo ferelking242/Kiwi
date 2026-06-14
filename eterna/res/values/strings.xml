@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <!-- Eterna Browser string overrides — AIVOS -->
+  <resources>
+      <string name="app_name">Eterna</string>
+      <string name="application_name">Eterna Browser</string>
+      <string name="package_name">com.aivos.eterna</string>
+      <string name="company_name">AIVOS</string>
+      <string name="app_tagline">Never Sleep. Never Forget.</string>
+
+      <!-- Settings -->
+      <string name="eterna_settings_title">Eterna Control Center</string>
+      <string name="eterna_session_protection">Session Protection</string>
+      <string name="eterna_immortal_mode">Immortal Mode</string>
+      <string name="eterna_battery_status">Battery Status</string>
+      <string name="eterna_background_status">Background Status</string>
+      <string name="eterna_shizuku">Shizuku Integration</string>
+      <string name="eterna_extensions">Extensions</string>
+      <string name="eterna_downloads">Downloads</string>
+      <string name="eterna_storage">Storage</string>
+      <string name="eterna_performance">Performance</string>
+
+      <!-- Tab types -->
+      <string name="new_tab">New Tab</string>
+      <string name="new_isolated_tab">New Isolated Tab</string>
+      <string name="new_private_tab">New Private Tab</string>
+      <string name="new_group">New Group</string>
+      <string name="new_isolated_group">New Isolated Group</string>
+
+      <!-- Tab context menu -->
+      <string name="tab_menu_reload">Reload</string>
+      <string name="tab_menu_duplicate">Duplicate</string>
+      <string name="tab_menu_duplicate_isolated">Duplicate As Isolated</string>
+      <string name="tab_menu_move_to_group">Move To Group</string>
+      <string name="tab_menu_pin">Pin</string>
+      <string name="tab_menu_protect_session">Protect Session</string>
+      <string name="tab_menu_keep_alive">Keep Alive</string>
+      <string name="tab_menu_export_session">Export Session</string>
+      <string name="tab_menu_close_others">Close Others</string>
+
+      <!-- Immortal Mode -->
+      <string name="immortal_mode_notification_title">Eterna — Immortal Mode Active</string>
+      <string name="immortal_mode_notification_text">%d tab(s) are protected and kept alive</string>
+      <string name="immortal_mode_channel_name">Immortal Mode</string>
+      <string name="immortal_mode_channel_desc">Keeps selected tabs alive in the background</string>
+
+      <!-- Session Protection -->
+      <string name="session_protection_saved">Session saved</string>
+      <string name="session_protection_restored">Session restored</string>
+      <string name="session_protection_failed">Session restore failed</string>
+
+      <!-- Download Manager -->
+      <string name="download_pause">Pause</string>
+      <string name="download_resume">Resume</string>
+      <string name="download_retry">Retry</string>
+      <string name="download_cancel">Cancel</string>
+      <string name="download_queued">Queued</string>
+      <string name="download_in_progress">Downloading…</string>
+      <string name="download_paused">Paused</string>
+      <string name="download_failed">Failed</string>
+      <string name="download_complete">Complete</string>
+
+      <!-- Shizuku -->
+      <string name="shizuku_unavailable">Shizuku not available — browser works without it</string>
+      <string name="shizuku_connected">Shizuku connected</string>
+      <string name="shizuku_battery_restriction_detected">Battery restriction detected. Tap to fix.</string>
+      <string name="shizuku_oem_killer_detected">OEM background killer detected. Tap for suggestions.</string>
+  </resources>
+  
