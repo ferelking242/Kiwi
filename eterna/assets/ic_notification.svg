@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <!-- Eterna Browser notification icon — flat white, 24dp -->
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+    <!-- Left lobe (simplified for small size) -->
+    <path d="M12,12 C12,12 9,8 6,8 C3.5,8 2,10 2,12 C2,14 3.5,16 6,16 C9,16 12,12 12,12 Z"
+          fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Right lobe -->
+    <path d="M12,12 C12,12 15,8 18,8 C20.5,8 22,10 22,12 C22,14 20.5,16 18,16 C15,16 12,12 12,12 Z"
+          fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Eye dot -->
+    <circle cx="12" cy="12" r="2.5" fill="#FFFFFF"/>
+  </svg>
