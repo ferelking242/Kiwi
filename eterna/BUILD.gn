@@ -1,0 +1,52 @@
+# Eterna Browser — GN build targets
+  # AIVOS | com.aivos.eterna | arm64-v8a
+
+  import("//build/config/android/rules.gni")
+  import("eterna_build_config.gni")
+
+  # Java library: core Eterna features
+  android_library("eterna_java") {
+    sources = [
+      "java/com/aivos/eterna/isolated/IsolatedTabManager.java",
+      "java/com/aivos/eterna/immortal/ImmortalModeService.java",
+      "java/com/aivos/eterna/session/SessionSnapshotManager.java",
+      "java/com/aivos/eterna/session/SessionProtectionManager.java",
+      "java/com/aivos/eterna/session/SessionRecoveryCoordinator.java",
+      "java/com/aivos/eterna/session/BootReceiver.java",
+      "java/com/aivos/eterna/download/EternaDownloadManager.java",
+      "java/com/aivos/eterna/download/DownloadBootReceiver.java",
+      "java/com/aivos/eterna/shizuku/ShizukuIntegration.java",
+      "java/com/aivos/eterna/tabs/TabCreationMenuDelegate.java",
+      "java/com/aivos/eterna/settings/EternaControlCenterActivity.java",
+    ]
+
+    deps = [
+      "//base:base_java",
+      "//chrome/android:chrome_java",
+      "//content/public/android:content_java",
+      "//ui/android:ui_java",
+      "//third_party/androidx:androidx_appcompat_appcompat_java",
+      "//third_party/androidx:androidx_preference_preference_java",
+      "//third_party/androidx:androidx_core_core_java",
+    ]
+
+    android_manifest_for_lint = "manifests/AndroidManifest.xml"
+    min_sdk_version = 23
+  }
+
+  # Resource overlay
+  android_resources("eterna_resources") {
+    sources = [
+      "res/values/strings.xml",
+      "res/values/channel_constants.xml",
+      "res/values/ids.xml",
+      "res/values/arrays.xml",
+      "res/xml/eterna_control_center_prefs.xml",
+      "res/layout/activity_eterna_control_center.xml",
+      "res/mipmap-anydpi-v26/ic_launcher.xml",
+      "res/mipmap-anydpi-v26/ic_launcher_round.xml",
+      "res/drawable/ic_launcher_background.xml",
+    ]
+    android_manifest = "manifests/AndroidManifest.xml"
+  }
+  
