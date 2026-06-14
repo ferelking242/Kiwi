@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+    <defs>
+      <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%"   stop-color="#0D1B2A"/>
+        <stop offset="100%" stop-color="#1A2D44"/>
+      </linearGradient>
+      <linearGradient id="ig" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#00C2E0"/>
+        <stop offset="50%"  stop-color="#0077FF"/>
+        <stop offset="100%" stop-color="#00C2E0"/>
+      </linearGradient>
+      <linearGradient id="eg" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#00E5FF"/>
+        <stop offset="100%" stop-color="#0077FF"/>
+      </linearGradient>
+      <filter id="glow2" x="-30%" y="-30%" width="160%" height="160%">
+        <feGaussianBlur stdDeviation="8" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <rect width="512" height="512" fill="url(#bg)"/>
+    <!-- Left lobe -->
+    <path d="M256,256 C256,256 206,170 136,170 C78,170 40,210 40,256 C40,302 78,342 136,342 C206,342 256,256 256,256 Z"
+          fill="none" stroke="url(#ig)" stroke-width="22"
+          stroke-linecap="round" filter="url(#glow2)"/>
+    <!-- Right lobe -->
+    <path d="M256,256 C256,256 306,170 376,170 C434,170 472,210 472,256 C472,302 434,342 376,342 C306,342 256,256 256,256 Z"
+          fill="none" stroke="url(#ig)" stroke-width="22"
+          stroke-linecap="round" filter="url(#glow2)"/>
+    <!-- Eye -->
+    <ellipse cx="256" cy="256" rx="62" ry="42"
+             fill="none" stroke="url(#eg)" stroke-width="10" filter="url(#glow2)"/>
+    <circle cx="256" cy="256" r="22" fill="url(#eg)" filter="url(#glow2)"/>
+    <circle cx="266" cy="247" r="7" fill="#FFFFFF" opacity="0.9"/>
+    <path d="M194,256 Q256,214 318,256" fill="none" stroke="#00C2E0" stroke-width="5" opacity="0.5"/>
+    <path d="M194,256 Q256,298 318,256" fill="none" stroke="#00C2E0" stroke-width="5" opacity="0.5"/>
+  </svg>
