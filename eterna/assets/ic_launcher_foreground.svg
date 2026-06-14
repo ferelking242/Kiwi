@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+    <defs>
+      <linearGradient id="infinity_grad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%"   stop-color="#00C2E0"/>
+        <stop offset="50%"  stop-color="#0077FF"/>
+        <stop offset="100%" stop-color="#00C2E0"/>
+      </linearGradient>
+      <linearGradient id="eye_grad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%"   stop-color="#00E5FF"/>
+        <stop offset="100%" stop-color="#0077FF"/>
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <!-- Left lobe -->
+    <path d="M54,54 C54,54 44,38 30,38 C18,38 10,46 10,54 C10,62 18,70 30,70 C44,70 54,54 54,54 Z"
+          fill="none" stroke="url(#infinity_grad)" stroke-width="6"
+          stroke-linecap="round" filter="url(#glow)"/>
+    <!-- Right lobe -->
+    <path d="M54,54 C54,54 64,38 78,38 C90,38 98,46 98,54 C98,62 90,70 78,70 C64,70 54,54 54,54 Z"
+          fill="none" stroke="url(#infinity_grad)" stroke-width="6"
+          stroke-linecap="round" filter="url(#glow)"/>
+    <!-- Eye -->
+    <ellipse cx="54" cy="54" rx="13" ry="9"
+             fill="none" stroke="url(#eye_grad)" stroke-width="2.5" filter="url(#glow)"/>
+    <circle cx="54" cy="54" r="5" fill="url(#eye_grad)" filter="url(#glow)"/>
+    <circle cx="56" cy="52" r="1.5" fill="#FFFFFF" opacity="0.85"/>
+    <path d="M41,54 Q54,44 67,54" fill="none" stroke="#00C2E0" stroke-width="1.5" opacity="0.6"/>
+    <path d="M41,54 Q54,64 67,54" fill="none" stroke="#00C2E0" stroke-width="1.5" opacity="0.6"/>
+  </svg>
