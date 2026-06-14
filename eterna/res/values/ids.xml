@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <!-- Eterna Browser — Resource IDs -->
+  <resources>
+      <!-- Tab creation menu -->
+      <item name="menu_new_tab"              type="id" />
+      <item name="menu_new_isolated_tab"     type="id" />
+      <item name="menu_new_private_tab"      type="id" />
+      <item name="menu_new_group"            type="id" />
+      <item name="menu_new_isolated_group"   type="id" />
+
+      <!-- Tab context menu -->
+      <item name="tab_menu_reload"             type="id" />
+      <item name="tab_menu_duplicate"          type="id" />
+      <item name="tab_menu_duplicate_isolated" type="id" />
+      <item name="tab_menu_move_to_group"      type="id" />
+      <item name="tab_menu_pin"                type="id" />
+      <item name="tab_menu_protect_session"    type="id" />
+      <item name="tab_menu_keep_alive"         type="id" />
+      <item name="tab_menu_export_session"     type="id" />
+      <item name="tab_menu_close_others"       type="id" />
+
+      <!-- Layouts -->
+      <item name="settings_container"          type="id" />
+  </resources>
+  
