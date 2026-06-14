@@ -1,0 +1,136 @@
+name: Eterna Browser — Build
+
+  on:
+    push:
+      branches: [ kiwi, main, dev ]
+    pull_request:
+      branches: [ kiwi, main ]
+    workflow_dispatch:
+
+  concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+  jobs:
+    build:
+      name: Build arm64-v8a APK
+      runs-on: ubuntu-latest
+      timeout-minutes: 360
+
+      steps:
+        - name: Checkout Eterna Browser
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 1
+
+        - name: Set up JDK 17
+          uses: actions/setup-java@v4
+          with:
+            distribution: temurin
+            java-version: 17
+
+        - name: Set up Python 3.11
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+
+        - name: Install system dependencies
+          run: |
+            sudo apt-get update -q
+            sudo apt-get install -y --no-install-recommends \
+              git curl wget python3-pip ninja-build pkg-config \
+              libglib2.0-dev libnspr4-dev libnss3-dev \
+              libcups2-dev libdbus-1-dev libpci-dev \
+              libxtst-dev libxss-dev libgconf-2-4 \
+              lsb-release xz-utils zip unzip
+
+        - name: Install depot_tools
+          run: |
+            git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
+            echo "$HOME/depot_tools" >> $GITHUB_PATH
+
+        - name: Configure gclient
+          run: |
+            gclient config --name src --unmanaged https://github.com/ferelking242/eterna-browser.git
+            cat .gclient
+
+        - name: Sync dependencies
+          run: |
+            gclient sync --nohooks --no-history -D --force
+          env:
+            DEPOT_TOOLS_UPDATE: 0
+
+        - name: Run hooks
+          run: gclient runhooks
+
+        - name: Apply Eterna branding patches
+          run: |
+            python3 eterna/scripts/apply_branding.py
+
+        - name: Set up Android SDK/NDK
+          run: |
+            python3 build/android/provision_devices.py --ignore-provision || true
+            python3 build/install-build-deps-android.py || true
+
+        - name: Generate build files (arm64-v8a)
+          run: |
+            mkdir -p out/eterna_arm64
+            cat > out/eterna_arm64/args.gn << 'EOF'
+            target_os = "android"
+            target_cpu = "arm64"
+            is_debug = false
+            is_official_build = true
+            is_component_build = false
+            use_errorprone_java_compiler = true
+            enable_nacl = false
+            chrome_pgo_phase = 0
+            android_channel = "stable"
+            android_default_version_name = "1.0.0"
+            android_default_version_code = "1000000"
+            ffmpeg_branding = "Chrome"
+            proprietary_codecs = true
+            fieldtrial_testing_like_official_build = true
+            EOF
+            gn gen out/eterna_arm64
+
+        - name: Build Eterna Browser APK
+          run: |
+            autoninja -C out/eterna_arm64 chrome_public_apk
+          env:
+            ETERNA_KEYSTORE: ${{ secrets.ETERNA_KEYSTORE_BASE64 }}
+            ETERNA_KEYSTORE_PASS: ${{ secrets.ETERNA_KEYSTORE_PASSWORD }}
+            ETERNA_KEY_ALIAS: ${{ secrets.ETERNA_KEY_ALIAS }}
+
+        - name: Rename output APK
+          run: |
+            mkdir -p artifacts
+            cp out/eterna_arm64/apks/ChromePublic.apk artifacts/eterna-browser-arm64-v8a.apk
+            cp out/eterna_arm64/apks/ChromePublic.apk.mapping artifacts/eterna-arm64-v8a-mapping.txt || true
+
+        - name: Upload APK artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: eterna-browser-arm64-v8a
+            path: artifacts/eterna-browser-arm64-v8a.apk
+            retention-days: 30
+
+        - name: Upload mapping artifact
+          uses: actions/upload-artifact@v4
+          with:
+            name: eterna-mapping-arm64-v8a
+            path: artifacts/eterna-arm64-v8a-mapping.txt
+            retention-days: 30
+
+        - name: Create release on tag
+          if: startsWith(github.ref, 'refs/tags/v')
+          uses: softprops/action-gh-release@v2
+          with:
+            files: |
+              artifacts/eterna-browser-arm64-v8a.apk
+              artifacts/eterna-arm64-v8a-mapping.txt
+            draft: false
+            prerelease: false
+            generate_release_notes: true
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
