@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+
+      <!-- Session Protection -->
+      <PreferenceCategory app:title="@string/eterna_session_protection">
+          <SwitchPreferenceCompat
+              app:key="pref_session_protection_global"
+              app:title="@string/eterna_session_protection"
+              app:summary="Auto-save and restore protected tab sessions"
+              app:defaultValue="true" />
+          <Preference
+              app:key="pref_session_protection_status"
+              app:title="Protected Tabs"
+              app:summary="0 tabs protected" />
+      </PreferenceCategory>
+
+      <!-- Immortal Mode -->
+      <PreferenceCategory app:title="@string/eterna_immortal_mode">
+          <SwitchPreferenceCompat
+              app:key="pref_immortal_mode_global"
+              app:title="@string/eterna_immortal_mode"
+              app:summary="Keep selected tabs alive in background"
+              app:defaultValue="false" />
+          <ListPreference
+              app:key="pref_snapshot_interval"
+              app:title="Snapshot Interval"
+              app:entries="@array/snapshot_intervals"
+              app:entryValues="@array/snapshot_interval_values"
+              app:defaultValue="30" />
+      </PreferenceCategory>
+
+      <!-- Battery Status -->
+      <PreferenceCategory app:title="@string/eterna_battery_status">
+          <Preference
+              app:key="pref_battery_optimization_status"
+              app:title="Battery Optimization"
+              app:summary="Checking…" />
+          <Preference
+              app:key="pref_battery_open_settings"
+              app:title="Open Battery Settings"
+              app:summary="Disable battery optimization for Eterna" />
+      </PreferenceCategory>
+
+      <!-- Background Status -->
+      <PreferenceCategory app:title="@string/eterna_background_status">
+          <Preference
+              app:key="pref_background_process_status"
+              app:title="Background Process"
+              app:summary="Running" />
+          <Preference
+              app:key="pref_background_wakelock_status"
+              app:title="WakeLock"
+              app:summary="Not held" />
+      </PreferenceCategory>
+
+      <!-- Shizuku -->
+      <PreferenceCategory app:title="@string/eterna_shizuku">
+          <Preference
+              app:key="pref_shizuku_status"
+              app:title="Shizuku Status"
+              app:summary="Checking…" />
+          <Preference
+              app:key="pref_shizuku_install"
+              app:title="Get Shizuku"
+              app:summary="Optional — allows detection of OEM restrictions" />
+      </PreferenceCategory>
+
+      <!-- Extensions -->
+      <PreferenceCategory app:title="@string/eterna_extensions">
+          <Preference
+              app:key="pref_extensions_manager"
+              app:title="Manage Extensions"
+              app:summary="Chrome extensions — MV2 and MV3 supported" />
+      </PreferenceCategory>
+
+      <!-- Downloads -->
+      <PreferenceCategory app:title="@string/eterna_downloads">
+          <Preference
+              app:key="pref_downloads_manager"
+              app:title="Download Manager"
+              app:summary="View downloads" />
+          <SeekBarPreference
+              app:key="pref_parallel_downloads"
+              app:title="Parallel Downloads"
+              app:min="1"
+              android:max="5"
+              app:defaultValue="3"
+              app:showSeekBarValue="true" />
+      </PreferenceCategory>
+
+      <!-- Storage -->
+      <PreferenceCategory app:title="@string/eterna_storage">
+          <Preference
+              app:key="pref_storage_usage"
+              app:title="Storage Usage"
+              app:summary="Calculating…" />
+          <Preference
+              app:key="pref_clear_snapshots"
+              app:title="Clear Session Snapshots"
+              app:summary="Remove all saved session data" />
+      </PreferenceCategory>
+
+      <!-- Performance -->
+      <PreferenceCategory app:title="@string/eterna_performance">
+          <SwitchPreferenceCompat
+              app:key="pref_hardware_acceleration"
+              app:title="Hardware Acceleration"
+              app:defaultValue="true" />
+          <SwitchPreferenceCompat
+              app:key="pref_reader_mode"
+              app:title="Reader Mode"
+              app:defaultValue="false" />
+      </PreferenceCategory>
+
+  </PreferenceScreen>
+  
