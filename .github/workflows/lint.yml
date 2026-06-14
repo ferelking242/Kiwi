@@ -1,38 +1,37 @@
 name: Eterna Browser — Lint
 
-  on:
-    push:
-      branches: [ kiwi, main, dev ]
-    pull_request:
-      branches: [ kiwi, main ]
+on:
+  push:
+    branches: [ kiwi, main, dev ]
+  pull_request:
+    branches: [ kiwi, main ]
 
-  jobs:
-    lint:
-      name: Lint & Compile Check
-      runs-on: ubuntu-latest
-      timeout-minutes: 60
+jobs:
+  lint:
+    name: Lint & Compile Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
 
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Set up Python 3.11
-          uses: actions/setup-python@v5
-          with:
-            python-version: '3.11'
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-        - name: Validate XML resources
-          run: python3 eterna/scripts/validate_resources.py
+      - name: Validate XML resources
+        run: python3 eterna/scripts/validate_resources.py
 
-        - name: Check branding completeness
-          run: python3 eterna/scripts/check_branding.py
+      - name: Check branding completeness
+        run: python3 eterna/scripts/check_branding.py
 
-        - name: Validate GN args
-          run: python3 eterna/scripts/validate_gn_args.py
+      - name: Validate GN args
+        run: python3 eterna/scripts/validate_gn_args.py
 
-        - name: Check no Kiwi strings remain in Eterna overlays
-          run: |
-            echo "Checking for unreplaced Kiwi branding in Eterna overlays..."
-            python3 eterna/scripts/check_no_kiwi.py
-            echo "Branding check passed."
-  
+      - name: Check no Kiwi strings remain in Eterna overlays
+        run: |
+          echo "Checking for unreplaced Kiwi branding in Eterna overlays..."
+          python3 eterna/scripts/check_no_kiwi.py
+          echo "Branding check passed."
