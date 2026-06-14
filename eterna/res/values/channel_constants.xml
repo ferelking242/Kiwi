@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <!-- Eterna Browser channel constants -->
+  <resources>
+      <string name="product_name" translatable="false">Eterna</string>
+      <string name="product_full_name" translatable="false">Eterna Browser</string>
+      <string name="channel_name" translatable="false">stable</string>
+      <string name="publisher_name" translatable="false">AIVOS</string>
+  </resources>
+  
