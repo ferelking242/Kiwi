@@ -1,47 +1,46 @@
 name: Eterna Browser — Release
 
-  on:
-    push:
-      tags:
-        - 'v*.*.*'
+on:
+  push:
+    tags:
+      - 'v*.*.*'
 
-  jobs:
-    release:
-      name: Publish Release
-      runs-on: ubuntu-latest
-      permissions:
-        contents: write
+jobs:
+  release:
+    name: Publish Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
-      steps:
-        - name: Checkout
-          uses: actions/checkout@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-        - name: Download APK from build
-          uses: dawidd6/action-download-artifact@v3
-          with:
-            workflow: build.yml
-            name: eterna-browser-arm64-v8a
-            path: release/
+      - name: Download APK from build
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: build.yml
+          name: eterna-browser-arm64-v8a
+          path: release/
 
-        - name: Create GitHub Release
-          uses: softprops/action-gh-release@v2
-          with:
-            name: "Eterna Browser ${{ github.ref_name }}"
-            body: |
-              ## Eterna Browser ${{ github.ref_name }}
-              **Never Sleep. Never Forget.**
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Eterna Browser ${{ github.ref_name }}"
+          body: |
+            ## Eterna Browser ${{ github.ref_name }}
+            **Never Sleep. Never Forget.**
 
-              ### Download
-              - `eterna-browser-arm64-v8a.apk` — arm64-v8a (Android 6.0+)
+            ### Download
+            - `eterna-browser-arm64-v8a.apk` — arm64-v8a (Android 6.0+)
 
-              ### Installation
-              Enable "Install from unknown sources" in Android settings, then install the APK.
+            ### Installation
+            Enable "Install from unknown sources" in Android settings, then install the APK.
 
-              ### What's New
-              See [CHANGELOG](https://github.com/ferelking242/eterna-browser/blob/kiwi/CHANGELOG.md)
-            files: release/eterna-browser-arm64-v8a.apk
-            draft: false
-            prerelease: false
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+            ### What's New
+            See [CHANGELOG](https://github.com/ferelking242/eterna-browser/blob/kiwi/CHANGELOG.md)
+          files: release/eterna-browser-arm64-v8a.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
