@@ -1,46 +1,70 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/kiwibrowser/src.next/kiwi/kiwi_logo_circle.svg" alt="KiwiBrowser"
-	title="KiwiBrowser" width="200" height="200"/>
- </p>
-<p align="center">
-  <a href="https://github.com/kiwibrowser/src.next/releases">
-  <img src="https://img.shields.io/github/v/release/kiwibrowser/src.next?include_prereleases&label=latest%20release"/>
-</a>
-  <a href="https://github.com/kiwibrowser/src.next/release">
-<img src="https://img.shields.io/github/downloads/kiwibrowser/src.next/total?label=GitHub%20Downloads&color=%6BDDD5"></a>
-<a href="https://github.com/kiwibrowser/src.next/blob/kiwi/LICENSE">
-  <img src="https://img.shields.io/github/license/kiwibrowser/src.next?color=%236BDDD5"/></a>
+# Eterna Browser
 
-  </p>
+  ![Build](https://github.com/ferelking242/eterna-browser/actions/workflows/build.yml/badge.svg)
+  ![Lint](https://github.com/ferelking242/eterna-browser/actions/workflows/lint.yml/badge.svg)
+  ![Platform](https://img.shields.io/badge/platform-Android%20arm64--v8a-blue)
+  ![License](https://img.shields.io/badge/license-BSD--3--Clause-green)
 
-# Kiwi Browser
+  > **Never Sleep. Never Forget.**
 
-Important note: Kiwi Browser is now archived. It will no longer be maintained after January 2025.
+  Eterna Browser is a Chromium-based Android browser by **AIVOS**, forked from Kiwi Browser.  
+  It is engineered for session persistence, isolated identities, Chrome extension support, and maximum background reliability.
 
-<img src="https://edgemobilegrowth.microsoft.com/extension/kiwi_to_edge.jpeg" height="100" />
+  ---
 
-To support users who rely on extensions, we've partnered with the Microsoft Edge team to offer a smooth migration path.
+  ## Features
 
-Clicking <a href="https://edgemobileapp.microsoft.com/?adjustId=1mfkz3u3_1m6jnsdw">the link</a> will prompt you to install Microsoft Edge, reveal a hidden message in the Edge Extensions Hub, and uNBlock a powerful Manifest V2 extension there.
+  | Feature | Description |
+  |---------|-------------|
+  | 🔒 **Isolated Tabs** | Each tab has its own cookies, storage, service workers and login session |
+  | ♾️ **Immortal Mode** | Keep-alive foreground service with smart WakeLocks and session snapshots |
+  | 🛡️ **Session Protection** | Auto-save URL, scroll, forms, cookies — auto-recover on crash/reboot |
+  | 👤 **Multi Profiles** | Fully separated browser profiles |
+  | 🗂️ **Tab Groups** | Grouped and isolated tab groups |
+  | 🧩 **Extensions** | Chrome extensions, Manifest V2 + V3 |
+  | ⬇️ **Download Manager** | Pause, resume, retry, parallel, crash-safe |
+  | 📡 **Shizuku Support** | Optional — detect OEM battery killers |
 
-The extensions code for Kiwi Browser also has been integrated into the development version of Microsoft Edge: [Microsoft Edge Canary](https://play.google.com/store/apps/details?id=com.microsoft.emmx.canary).
+  ## Build
 
-To install extensions on Microsoft Edge Canary:
+  ### Requirements
+  - Android SDK / NDK
+  - depot_tools (Chromium)
+  - JDK 17
+  - Python 3.11+
+  - Ubuntu 22.04+ build host
 
-1. Open **Microsoft Edge Canary** and go to **Settings > About Microsoft Edge**.  
-2. Tap the **Edge build number** (e.g., `xx.0.2487.0`) 5 times to enable **Developer Options**.  
-3. In Developer Options, select **Extension install by id**.  
+  ### Quick Start
+  ```bash
+  gclient config --name src --unmanaged https://github.com/ferelking242/eterna-browser.git
+  gclient sync --nohooks --no-history -D
+  gclient runhooks
+  python3 eterna/scripts/apply_branding.py
+  gn gen out/eterna_arm64 --args="target_os=\"android\" target_cpu=\"arm64\" is_official_build=true"
+  autoninja -C out/eterna_arm64 chrome_public_apk
+  ```
 
-To find the extension ID:  
-- Open the [Microsoft Edge Web Store](https://microsoftedge.microsoft.com/addons/Microsoft-Edge-Extensions-Home).  
-- Locate and select the desired extension.  
-- Copy the ID from the URL (e.g., for Bitwarden, the ID is `jbkfoedolllekgbhcbcoahefnbanhhlh` from the URL ending).  
+  ### CI/CD
+  Every push triggers an automated build.  
+  APK artifacts are available under **Actions → Build → Artifacts**.
 
-4. Paste the extension ID into the **Extension install by id** field.  
-5. The extension will install.  
+  ## Architecture
 
-If you really need Kiwi Browser, you can download the [latest published version of Kiwi Browser here](https://github.com/kiwibrowser/src.next/releases/tag/14310011181). Do not download Kiwi Browser from any other sources.
+  - **Target ABI:** arm64-v8a only
+  - **Engine:** Chromium (latest Kiwi base)
+  - **Min SDK:** 23 (Android 6.0)
+  - **Target SDK:** 34 (Android 14)
+  - **Package:** com.aivos.eterna
 
-While your Kiwi Browser installation will still work for some time, it’s essential to explore alternatives like [Microsoft Edge Canary](https://play.google.com/store/apps/details?id=com.microsoft.emmx.canary), [Vivaldi Browser](https://play.google.com/store/apps/details?id=com.vivaldi.browser) or [Mozilla Firefox](https://play.google.com/store/apps/details?id=org.mozilla.firefox) to stay secure and up-to-date.
+  ## Package
 
--- Arnaud.
+  `com.aivos.eterna`
+
+  ## Company
+
+  **AIVOS**
+
+  ## License
+
+  BSD 3-Clause — see [LICENSE](LICENSE)
+  
