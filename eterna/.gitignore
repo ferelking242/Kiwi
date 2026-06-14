@@ -1,0 +1,12 @@
+# Eterna Browser — local build artifacts
+  *.keystore
+  *.jks
+  *.p12
+  eterna-release.*
+  out/
+  .gclient
+  .gclient_entries
+  *.pyc
+  __pycache__/
+  *.log
+  
