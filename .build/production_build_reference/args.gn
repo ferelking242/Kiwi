@@ -36,7 +36,7 @@ enable_remoting = false
 rtc_use_h264 = false
 
 v8_use_external_startup_data = true
-update_android_aar_prebuilts = true
+update_android_aar_prebuilts = false
 
 enable_extensions = true
 enable_supervised_users = false
