@@ -247,7 +247,7 @@ jobs:
         run: |
           cd /home/runner/chromium/src
           export PATH="/home/runner/depot_tools:$PATH"
-          gn gen out/android_arm64 2>&1
+          gn gen out/android_arm64 --root-target=//chrome/android:chrome_public_apk 2>&1
 
       # ----------------------------------------------------------------
       # 15. Build  (arm64 only – autoninja auto-limits parallelism)
