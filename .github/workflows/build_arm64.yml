@@ -182,7 +182,7 @@ jobs:
                           with open(path) as f:
                               content = f.read()
                           if 'assert(!is_android)' in content:
-                              nc = re.sub(r'[ \t]*assert\(!is_android\)[^\n]*\n', '', content)
+                              nc = re.sub(r'^[ \t]*assert\(!is_android\)[^\n]*\n', '', content, 0, re.MULTILINE)
                               with open(path, 'w') as f:
                                   f.write(nc)
                               count += 1
