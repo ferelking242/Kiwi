@@ -167,11 +167,11 @@ jobs:
             fi
           done
           # Strip //chrome/test:* deps from Chromium root BUILD.gn.
-    # Those test targets pull in ChromeOS-only desktop code (chrome/browser/ui)
-    # which asserts is_chromeos — they are never needed to build the production APK.
-    sed -i '/^[[:space:]]*"\/\/chrome\/test:/d' /home/runner/chromium/src/BUILD.gn
-    echo "Stripped //chrome/test deps from root BUILD.gn ✓"
-    echo "All Kiwi patches applied."
+          # Those test targets pull in ChromeOS-only desktop code (chrome/browser/ui)
+          # which asserts is_chromeos — they are never needed to build the production APK.
+          sed -i '/^[[:space:]]*"\/\/chrome\/test:/d' /home/runner/chromium/src/BUILD.gn
+          echo "Stripped //chrome/test deps from root BUILD.gn"
+          echo "All Kiwi patches applied."
 
       # ----------------------------------------------------------------
       # 10. Run gclient hooks (installs Android NDK / SDK, clang, etc.)
