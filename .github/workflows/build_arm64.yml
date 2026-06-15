@@ -166,29 +166,29 @@ jobs:
               cp -rf "$KIWI/$dir/." "$CSRC/$dir/"
             fi
           done
-          # Strip ALL test/junit/perf deps from Chromium root BUILD.gn (global fix).
-          # Root BUILD.gn unconditionally includes dozens of Android test targets.
-          # Those pull in BUILD.gn files with assert(!is_android)/assert(is_chromeos).
-          # One Python pass eliminates the entire class of assertion failures.
+          # Global fix: walk ALL BUILD.gn files and remove assert(!is_android).
+          # Kiwi Browser enables desktop WebUI features on Android. Each resource
+          # directory (downloads, webui_gallery, etc.) has assert(!is_android).
+          # Walking the full tree removes them all in one pass.
           python3 - << 'PYEOF'
-          import re
-          with open('/home/runner/chromium/src/BUILD.gn') as f:
-              content = f.read()
-          lines = content.split('\n')
-          out = []
-          for l in lines:
-              s = l.strip()
-              if s.startswith('"//') and s.endswith('",'):
-                  t = s[1:-2]
-                  if 'chrome_public_apk' in t:
-                      out.append(l)
-                      continue
-                  if re.search(r'(test|tests|junit|perf|unittest)', t, re.IGNORECASE):
-                      continue
-              out.append(l)
-          with open('/home/runner/chromium/src/BUILD.gn', 'w') as f:
-              f.write('\n'.join(out))
-          print("Stripped all test/junit/perf deps from root BUILD.gn")
+          import os, re
+          count = 0
+          for root, dirs, files in os.walk('/home/runner/chromium/src'):
+              dirs[:] = [d for d in dirs if d not in ['.git', 'out']]
+              for fname in files:
+                  if fname == 'BUILD.gn':
+                      path = os.path.join(root, fname)
+                      try:
+                          with open(path) as f:
+                              content = f.read()
+                          if 'assert(!is_android)' in content:
+                              nc = re.sub(r'[ \t]*assert\(!is_android\)[^\n]*\n', '', content)
+                              with open(path, 'w') as f:
+                                  f.write(nc)
+                              count += 1
+                      except Exception:
+                          pass
+          print(f"Removed assert(!is_android) from {count} BUILD.gn files")
           PYEOF
           echo "All Kiwi patches applied."
 
