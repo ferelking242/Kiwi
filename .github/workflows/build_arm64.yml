@@ -166,11 +166,30 @@ jobs:
               cp -rf "$KIWI/$dir/." "$CSRC/$dir/"
             fi
           done
-          # Strip //chrome/test:* deps from Chromium root BUILD.gn.
-          # Those test targets pull in ChromeOS-only desktop code (chrome/browser/ui)
-          # which asserts is_chromeos — they are never needed to build the production APK.
-          sed -i '/^[[:space:]]*"\/\/chrome\/test:/d' /home/runner/chromium/src/BUILD.gn
-          echo "Stripped //chrome/test deps from root BUILD.gn"
+          # Strip ALL test/junit/perf deps from Chromium root BUILD.gn (global fix).
+          # Root BUILD.gn unconditionally includes dozens of Android test targets.
+          # Those pull in BUILD.gn files with assert(!is_android)/assert(is_chromeos).
+          # One Python pass eliminates the entire class of assertion failures.
+          python3 - << 'PYEOF'
+          import re
+          with open('/home/runner/chromium/src/BUILD.gn') as f:
+              content = f.read()
+          lines = content.split('\n')
+          out = []
+          for l in lines:
+              s = l.strip()
+              if s.startswith('"//') and s.endswith('",'):
+                  t = s[1:-2]
+                  if 'chrome_public_apk' in t:
+                      out.append(l)
+                      continue
+                  if re.search(r'(test|tests|junit|perf|unittest)', t, re.IGNORECASE):
+                      continue
+              out.append(l)
+          with open('/home/runner/chromium/src/BUILD.gn', 'w') as f:
+              f.write('\n'.join(out))
+          print("Stripped all test/junit/perf deps from root BUILD.gn")
+          PYEOF
           echo "All Kiwi patches applied."
 
       # ----------------------------------------------------------------
