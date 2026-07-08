@@ -243,7 +243,7 @@ generate_definitions_js_files = [
   "js/cr/ui.m.js",
   "js/cr/ui/focus_outline_manager.m.js",
   "js/cr/ui/focus_row.m.js",
-  "js/cr/ui/keyboard_shortcut_list.js",
+  "js/cr/ui/keyboard_shortcut_list.m.js",
   "js/cr/ui/store.js",
   "js/event_tracker.m.js",
   "js/load_time_data.m.js",
