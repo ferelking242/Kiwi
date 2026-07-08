@@ -168,10 +168,16 @@ jobs:
           done
           # Global fix: walk ALL BUILD.gn files and remove assert(!is_android).
           # Kiwi Browser enables desktop WebUI features on Android. Each resource
-          # directory (downloads, webui_gallery, etc.) has assert(!is_android).
-          # Walking the full tree removes them all in one pass.
+          # directory (downloads, webui_gallery, etc.) has assert(!is_android) or
+          # assert(!is_android && !is_ios). Walking the full tree removes them all.
           python3 - << 'PYEOF'
           import os, re
+          # Match any assert(...) that contains !is_android, including combined forms
+          # like assert(!is_android && !is_ios) or assert(!is_ios && !is_android).
+          ASSERT_RE = re.compile(
+              r'^[ \t]*assert\([^)\n]*!is_android[^)\n]*\)[^\n]*\n',
+              re.MULTILINE,
+          )
           count = 0
           for root, dirs, files in os.walk('/home/runner/chromium/src'):
               dirs[:] = [d for d in dirs if d not in ['.git', 'out']]
@@ -181,14 +187,15 @@ jobs:
                       try:
                           with open(path) as f:
                               content = f.read()
-                          if 'assert(!is_android)' in content:
-                              nc = re.sub(r'^[ \t]*assert\(!is_android\)[^\n]*\n', '', content, 0, re.MULTILINE)
-                              with open(path, 'w') as f:
-                                  f.write(nc)
-                              count += 1
+                          if '!is_android' in content:
+                              nc = ASSERT_RE.sub('', content)
+                              if nc != content:
+                                  with open(path, 'w') as f:
+                                      f.write(nc)
+                                  count += 1
                       except Exception:
                           pass
-          print(f"Removed assert(!is_android) from {count} BUILD.gn files")
+          print(f"Removed !is_android assertions from {count} BUILD.gn files")
           PYEOF
           echo "All Kiwi patches applied."
 
