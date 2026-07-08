@@ -5490,7 +5490,7 @@ static_library("ui") {
 
     if (is_mac) {
       sources += [ "views/javascript_app_modal_event_blocker_mac.h" ]
-    } else {
+    } else if (!is_android) {
       deps += [ "//apps/ui/views" ]
     }
 
