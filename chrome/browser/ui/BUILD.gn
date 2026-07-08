@@ -1813,7 +1813,6 @@ static_library("ui") {
       "//components/user_education/common",
       "//components/user_notes:features",
       "//components/vector_icons",
-      "//components/web_modal",
       "//components/webauthn/content/browser",
       "//device/bluetooth",
       "//device/bluetooth/strings:strings_grit",
@@ -5356,10 +5355,14 @@ static_library("ui") {
   }
 
   if (enable_extensions) {
+    if (!is_android) {
+      deps += [
+        "//apps",
+        "//chrome/browser/apps/platform_apps",
+        "//chrome/browser/apps/platform_apps/api",
+      ]
+    }
     deps += [
-      "//apps",
-      "//chrome/browser/apps/platform_apps",  # TODO(loyso): Remove this dep.
-      "//chrome/browser/apps/platform_apps/api",
       "//chrome/browser/ash/system_web_apps/types:types",
       "//chrome/browser/extensions",
       "//chrome/browser/web_share_target",
@@ -5374,11 +5377,13 @@ static_library("ui") {
       "//ui/base/cursor",
       "//ui/color:color",
     ]
-    allow_circular_includes_from += [
-      "//chrome/browser/apps/platform_apps",
-      "//chrome/browser/apps/platform_apps/api",
-      "//chrome/browser/extensions",
-    ]
+    if (!is_android) {
+      allow_circular_includes_from += [
+        "//chrome/browser/apps/platform_apps",
+        "//chrome/browser/apps/platform_apps/api",
+      ]
+    }
+    allow_circular_includes_from += [ "//chrome/browser/extensions" ]
     sources += [
       "extensions/accelerator_priority.h",
       "extensions/app_launch_params.cc",
