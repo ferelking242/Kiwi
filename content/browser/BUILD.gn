@@ -2530,7 +2530,7 @@ source_set("browser") {
     ]
   }
 
-  if (!is_android || true) {
+  if (!is_android) {
     deps += [ "//content/browser/devtools:devtools_resources_extern" ]
   }
 
@@ -2977,7 +2977,7 @@ source_set("browser") {
     }
     libs += [ "jnigraphics" ]
   }
-  if (true) {
+  if (!is_android) {
     # Not Android.
     sources += [
       # The WebAuthn devtools protocol API is not supported in Android yet.
