@@ -246,6 +246,30 @@ jobs:
               f.write(content)
           print("Patched gn_all: excluded extensions test-only targets from Android")
           PYEOF
+
+          # Root BUILD.gn's gn_all group includes //chrome/test:unit_tests in
+          # the if (!is_ios) block with no Android guard. On Android this causes
+          # unit_tests__apk to be evaluated, which transitively requires
+          # extensions:extensions_resources to have an Android APK build config —
+          # a config that the Android toolchain cannot generate for that group.
+          # Fix: add chrome/test:unit_tests to the existing deps -= list in the
+          # if (is_android) block (alongside net_perftests / url_unittests).
+          python3 - << 'PYEOF'
+          path = '/home/runner/chromium/src/BUILD.gn'
+          with open(path) as f:
+              content = f.read()
+          android_minus = '    deps -= [\n      "//net:net_perftests",'
+          if android_minus not in content:
+              raise SystemExit("Could not find 'deps -= //net:net_perftests' in Android block of root BUILD.gn.")
+          content = content.replace(
+              android_minus,
+              '    deps -= [\n      "//chrome/test:unit_tests",\n      "//net:net_perftests",',
+              1,
+          )
+          with open(path, 'w') as f:
+              f.write(content)
+          print("Patched gn_all: removed chrome/test:unit_tests from Android deps")
+          PYEOF
           echo "All Kiwi patches applied."
 
       # ----------------------------------------------------------------
