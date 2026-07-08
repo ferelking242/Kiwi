@@ -118,44 +118,56 @@ jobs:
               cp -rf "$ETERNA/$dir/." "$CSRC/$dir/"
             fi
           done
-          # Only strip the Android/iOS guard assert from BUILD.gn files that
-          # Eterna actually patched (i.e. files present under eterna_patches).
-          # Walking the whole Chromium checkout here previously unlocked
-          # untouched, genuinely desktop-only code (e.g. apps/ui/views),
-          # which then failed on a *different*, unrelated assertion
-          # (assert(toolkit_views)) further down the dependency graph.
+          # Eterna enables desktop WebUI features on Android. Chrome's resource
+          # .gni files (chrome_paks.gni) unconditionally pull in some
+          # desktop-only resource directories (downloads, webui_gallery,
+          # discards, etc.) that each carry an assert(!is_android) or
+          # assert(!is_android && !is_ios) guard. Walking the full tree removes
+          # them all so gn gen can evaluate those files for Android.
           python3 - << 'PYEOF'
           import os, re
-          ETERNA = os.environ["GITHUB_WORKSPACE"] + "/eterna_patches"
-          CSRC = "/home/runner/chromium/src"
-          PATCHED_DIRS = "apps base chrome components content extensions net remoting services third_party toolbox ui".split()
           ASSERT_RE = re.compile(
               r'^[ \t]*assert\([^)\n]*!is_android[^)\n]*\)[^\n]*\n',
               re.MULTILINE,
           )
           count = 0
-          for top in PATCHED_DIRS:
-              src_top = os.path.join(ETERNA, top)
-              if not os.path.isdir(src_top):
-                  continue
-              for root, dirs, files in os.walk(src_top):
-                  dirs[:] = [d for d in dirs if d not in ('.git', 'out')]
-                  if 'BUILD.gn' not in files:
-                      continue
-                  rel = os.path.relpath(root, ETERNA)
-                  path = os.path.join(CSRC, rel, 'BUILD.gn')
-                  try:
-                      with open(path) as f:
-                          content = f.read()
-                      if '!is_android' in content:
-                          nc = ASSERT_RE.sub('', content)
-                          if nc != content:
-                              with open(path, 'w') as f:
-                                  f.write(nc)
-                              count += 1
-                  except Exception:
-                      pass
-          print(f"Removed !is_android assertions from {count} BUILD.gn files (patched dirs only)")
+          for root, dirs, files in os.walk('/home/runner/chromium/src'):
+              dirs[:] = [d for d in dirs if d not in ['.git', 'out']]
+              for fname in files:
+                  if fname == 'BUILD.gn':
+                      path = os.path.join(root, fname)
+                      try:
+                          with open(path) as f:
+                              content = f.read()
+                          if '!is_android' in content:
+                              nc = ASSERT_RE.sub('', content)
+                              if nc != content:
+                                  with open(path, 'w') as f:
+                                      f.write(nc)
+                                  count += 1
+                      except Exception:
+                          pass
+          print(f"Removed !is_android assertions from {count} BUILD.gn files")
+
+          # apps/ui/views is genuinely desktop-only (Chrome Apps window frame)
+          # and requires toolkit_views=true, which this Android build does not
+          # (and should not) set -- forcing it on breaks unrelated Android UI
+          # code. If Eterna's patches pull it in transitively (e.g. via a
+          # webui page's resource deps), drop that dependency edge here
+          # instead of trying to satisfy toolkit_views.
+          apps_ui_views_gn = '/home/runner/chromium/src/apps/ui/views/BUILD.gn'
+          if os.path.exists(apps_ui_views_gn):
+              with open(apps_ui_views_gn) as f:
+                  content = f.read()
+              guarded = (
+                  'if (!is_android && !is_ios) {\n'
+                  + '\n'.join('  ' + line if line.strip() else line for line in content.splitlines())
+                  + '\n}\n'
+              )
+              if 'if (!is_android && !is_ios) {' not in content:
+                  with open(apps_ui_views_gn, 'w') as f:
+                      f.write(guarded)
+                  print("Wrapped apps/ui/views/BUILD.gn in an Android/iOS guard (requires toolkit_views, not available on Android)")
           PYEOF
           echo "All Eterna patches applied."
 
