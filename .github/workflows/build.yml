@@ -179,6 +179,18 @@ jobs:
               + extra
               + content[close_idx:]
           )
+          app_shell_marker = 'deps += [ "//extensions/shell:app_shell" ]'
+          if app_shell_marker not in content:
+              raise SystemExit("app_shell reference not found in root BUILD.gn -- Chromium version may have changed this block's shape.")
+          app_shell_idx = content.index(app_shell_marker)
+          second_if_idx = content.rfind(if_marker, 0, app_shell_idx)
+          if second_if_idx == -1 or app_shell_idx - second_if_idx > 60:
+              raise SystemExit("Could not find enclosing 'if (enable_extensions)' block near app_shell in root BUILD.gn.")
+          content = (
+              content[:second_if_idx]
+              + 'if (enable_extensions && !is_android) {'
+              + content[second_if_idx + len(if_marker):]
+          )
           with open(path, 'w') as f:
               f.write(content)
           print("Patched gn_all: excluded extensions test-only targets from Android")
