@@ -200,6 +200,45 @@ jobs:
                           pass
           print(f"Removed !is_android assertions from {count} BUILD.gn files")
           PYEOF
+
+          # Root //BUILD.gn's gn_all group requires //extensions:extensions_browsertests,
+          # //extensions:extensions_unittests and //extensions/shell:app_shell_unittests
+          # whenever enable_extensions=true, with no is_android exception -- because in
+          # stock Chromium enable_extensions is always false on Android. Kiwi/Eterna force
+          # it on for Android, but extensions/BUILD.gn deliberately excludes the pak/shell
+          # test targets those depend on for is_android (they were never meant to build
+          # there). Exclude them from gn_all on Android too, matching extensions/BUILD.gn's
+          # own guard, instead of trying to make untested test-only targets buildable.
+          python3 - << 'PYEOF'
+          path = '/home/runner/chromium/src/BUILD.gn'
+          with open(path) as f:
+              content = f.read()
+          old = '''  if (enable_extensions) {
+    deps += [
+      "//extensions:extensions_browsertests",
+      "//extensions:extensions_unittests",
+      "//extensions/browser/api/declarative_net_request/filter_list_converter",
+      "//extensions/shell:app_shell_unittests",
+    ]
+  }'''
+          new = '''  if (enable_extensions && !is_android) {
+    deps += [
+      "//extensions:extensions_browsertests",
+      "//extensions:extensions_unittests",
+      "//extensions/browser/api/declarative_net_request/filter_list_converter",
+      "//extensions/shell:app_shell_unittests",
+    ]
+  } else if (enable_extensions) {
+    deps += [
+      "//extensions/browser/api/declarative_net_request/filter_list_converter",
+    ]
+  }'''
+          if old not in content:
+              raise SystemExit("Could not find expected gn_all enable_extensions block in root BUILD.gn -- Chromium version may have changed this block's shape.")
+          with open(path, 'w') as f:
+              f.write(content.replace(old, new, 1))
+          print("Patched gn_all: excluded extensions test-only targets from Android")
+          PYEOF
           echo "All Kiwi patches applied."
 
       # ----------------------------------------------------------------
