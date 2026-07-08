@@ -90,7 +90,7 @@ jobs:
           git clone --depth=1 \
             https://chromium.googlesource.com/chromium/tools/depot_tools.git \
             /home/runner/depot_tools
-          echo "/home/runner/depot_tools" >> $GITHUB_PATH
+          echo "/home/runner/depot_tools" >> "$GITHUB_PATH"
 
       # ----------------------------------------------------------------
       # 6. Checkout this Kiwi fork (Kiwi patches only)
@@ -106,13 +106,13 @@ jobs:
       - name: Read Chromium version
         id: version
         run: |
-          source $GITHUB_WORKSPACE/kiwi_patches/CHROMIUM_VERSION
+          source "$GITHUB_WORKSPACE/kiwi_patches/CHROMIUM_VERSION"
           VERSION="${CHROMIUM_MAJOR}.${CHROMIUM_MINOR}.${CHROMIUM_BUILD}.${CHROMIUM_PATCH}"
-          echo "chromium=${VERSION}" >> $GITHUB_OUTPUT
+          echo "chromium=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "Chromium: ${VERSION}"
-          source $GITHUB_WORKSPACE/kiwi_patches/KIWI_VERSION
+          source "$GITHUB_WORKSPACE/kiwi_patches/KIWI_VERSION"
           KIWI_VER="${MAJOR}.${MINOR}.${BUILD}.${PATCH}"
-          echo "kiwi=${KIWI_VER}" >> $GITHUB_OUTPUT
+          echo "kiwi=${KIWI_VER}" >> "$GITHUB_OUTPUT"
           echo "Kiwi: ${KIWI_VER}"
 
       # ----------------------------------------------------------------
@@ -280,8 +280,8 @@ jobs:
           BUILD_DATE=$(date '+%y%m%d')
           FINAL_NAME="kiwi-arm64-${BUILD_DATE}-run${{ github.run_id }}.apk"
           cp "$APKS_DIR/ChromePublic.apk" "$APKS_DIR/$FINAL_NAME"
-          echo "APK_PATH=$APKS_DIR/$FINAL_NAME" >> $GITHUB_ENV
-          echo "APK_NAME=$FINAL_NAME" >> $GITHUB_ENV
+          echo "APK_PATH=$APKS_DIR/$FINAL_NAME" >> "$GITHUB_ENV"
+          echo "APK_NAME=$FINAL_NAME" >> "$GITHUB_ENV"
 
       # ----------------------------------------------------------------
       # 17. Upload APK as GitHub Actions artifact (always, even on error)

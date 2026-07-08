@@ -2,9 +2,9 @@ name: Eterna Browser — Build
 
 on:
   push:
-    branches: [ kiwi, main, dev ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ kiwi, main ]
+    branches: [ main ]
   workflow_dispatch:
 
 concurrency:
@@ -14,56 +14,159 @@ concurrency:
 jobs:
   build:
     name: Build arm64-v8a APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     timeout-minutes: 360
 
     steps:
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost
+          sudo swapoff -av || true
+          sudo rm -f /swapfile
+          sudo rm -rf \
+            /usr/share/dotnet \
+            /usr/local/lib/android \
+            /opt/ghc \
+            /opt/hostedtoolcache/CodeQL \
+            /usr/share/swift \
+            /usr/local/share/boost
+          sudo apt-get clean -y
           df -h
 
-      - name: Create swap
+      - name: Create 8 GB swap
         run: |
-          sudo swapoff /swapfile 2>/dev/null || true
-          sudo rm -f /swapfile
-          sudo dd if=/dev/zero of=/swapfile bs=1M count=8192 status=none
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
+          sudo fallocate -l 8G /swapfile2
+          sudo chmod 600 /swapfile2
+          sudo mkswap /swapfile2
+          sudo swapon /swapfile2
+          free -h
 
-      - name: Install depot_tools
+      - name: Install build dependencies
         run: |
-          git clone --depth 1 https://chromium.googlesource.com/chromium/tools/depot_tools.git $HOME/depot_tools
-          echo "$HOME/depot_tools" >> $GITHUB_PATH
+          sudo apt-get update -y
+          sudo apt-get install -y \
+            git curl wget \
+            python3 python3-pip \
+            lsb-release sudo file xz-utils \
+            ccache openjdk-11-jdk-headless \
+            libncurses5 libtinfo5 \
+            pkg-config zip unzip bzip2 \
+            lzma lib32z1 lib32stdc++6 libstdc++6
 
-      - name: Fetch Kiwi Browser source (shallow)
+      - name: Fetch depot_tools
         run: |
-          gclient config --name src --unmanaged https://github.com/ferelking242/eterna-browser.git
-          gclient sync --nohooks --no-history --shallow -D --force -r kiwi
-        env:
-          DEPOT_TOOLS_UPDATE: 0
+          git clone --depth=1 \
+            https://chromium.googlesource.com/chromium/tools/depot_tools.git \
+            /home/runner/depot_tools
+          echo "/home/runner/depot_tools" >> "$GITHUB_PATH"
+
+      - name: Checkout Eterna Browser patches
+        uses: actions/checkout@v4
+        with:
+          path: eterna_patches
+
+      - name: Read Chromium version
+        id: version
+        run: |
+          source "$GITHUB_WORKSPACE/eterna_patches/CHROMIUM_VERSION"
+          VERSION="${CHROMIUM_MAJOR}.${CHROMIUM_MINOR}.${CHROMIUM_BUILD}.${CHROMIUM_PATCH}"
+          echo "chromium=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Chromium: ${VERSION}"
+          source "$GITHUB_WORKSPACE/eterna_patches/KIWI_VERSION"
+          KIWI_VER="${MAJOR}.${MINOR}.${BUILD}.${PATCH}"
+          echo "kiwi=${KIWI_VER}" >> "$GITHUB_OUTPUT"
+          echo "Kiwi: ${KIWI_VER}"
+
+      - name: Create gclient config
+        run: |
+          mkdir -p /home/runner/chromium
+          cat > /home/runner/chromium/.gclient << 'GCLIENT_EOF'
+          solutions = [
+            {
+              "url": "https://chromium.googlesource.com/chromium/src.git",
+              "managed": False,
+              "name": "src",
+              "custom_deps": {},
+              "custom_vars": {
+                "checkout_android": True,
+                "checkout_android_native_support": True,
+              },
+            },
+          ]
+          target_os = ["android"]
+          GCLIENT_EOF
+
+      - name: Fetch Chromium src at pinned version
+        run: |
+          cd /home/runner/chromium
+          export PATH="/home/runner/depot_tools:$PATH"
+          gclient sync \
+            --nohooks \
+            --no-history \
+            -r src@${{ steps.version.outputs.chromium }} \
+            --jobs 16 \
+            2>&1 | tail -40
+          df -h
+
+      - name: Apply Eterna patches
+        run: |
+          ETERNA="$GITHUB_WORKSPACE/eterna_patches"
+          CSRC="/home/runner/chromium/src"
+          for dir in apps base chrome components content extensions net \
+                     remoting services third_party toolbox ui; do
+            if [ -d "$ETERNA/$dir" ]; then
+              echo "-> Patching: $dir"
+              cp -rf "$ETERNA/$dir/." "$CSRC/$dir/"
+            fi
+          done
+          python3 - << 'PYEOF'
+          import os, re
+          ASSERT_RE = re.compile(
+              r'^[ \t]*assert\([^)\n]*!is_android[^)\n]*\)[^\n]*\n',
+              re.MULTILINE,
+          )
+          count = 0
+          for root, dirs, files in os.walk('/home/runner/chromium/src'):
+              dirs[:] = [d for d in dirs if d not in ['.git', 'out']]
+              for fname in files:
+                  if fname == 'BUILD.gn':
+                      path = os.path.join(root, fname)
+                      try:
+                          with open(path) as f:
+                              content = f.read()
+                          if '!is_android' in content:
+                              nc = ASSERT_RE.sub('', content)
+                              if nc != content:
+                                  with open(path, 'w') as f:
+                                      f.write(nc)
+                                  count += 1
+                      except Exception:
+                          pass
+          print(f"Removed !is_android assertions from {count} BUILD.gn files")
+          PYEOF
+          echo "All Eterna patches applied."
 
       - name: Run gclient hooks
-        run: gclient runhooks
-        env:
-          DEPOT_TOOLS_UPDATE: 0
+        run: |
+          cd /home/runner/chromium/src
+          export PATH="/home/runner/depot_tools:$PATH"
+          gclient runhooks --jobs 16 2>&1 | tail -20
 
       - name: Install Android build deps
         run: |
-          cd src
-          sudo ./build/install-build-deps-android.py --no-prompt 2>/dev/null || true
-          sudo ./build/install-build-deps.py --no-prompt --no-syms 2>/dev/null || true
+          cd /home/runner/chromium/src
+          export PATH="/home/runner/depot_tools:$PATH"
+          yes | ./build/install-build-deps-android.sh 2>&1 | tail -20
 
       - name: Decode keystore
         run: |
           echo "${{ secrets.ETERNA_KEYSTORE_BASE64 }}" | base64 -d > /tmp/eterna.keystore
 
-      - name: Generate build files (arm64-v8a)
+      - name: Prepare args.gn
         run: |
-          cd src
-          mkdir -p out/eterna_arm64
-          cat > out/eterna_arm64/args.gn << 'ARGSEOF'
+          mkdir -p /home/runner/chromium/src/out/eterna_arm64
+          BUILD_DATE=$(date '+%y%m%d')
+          RUN_ID="${{ github.run_id }}"
+          cat > /home/runner/chromium/src/out/eterna_arm64/args.gn << ARGSEOF
           target_os = "android"
           target_cpu = "arm64"
           is_debug = false
@@ -73,40 +176,53 @@ jobs:
           enable_chrome_apps = false
           chrome_pgo_phase = 0
           android_channel = "stable"
-          android_default_version_name = "1.0.0"
-          android_default_version_code = "1000000"
+          android_default_version_name = "Eterna-${BUILD_DATE}-${RUN_ID}"
+          android_default_version_code = "${BUILD_DATE}2"
           ffmpeg_branding = "Chrome"
           proprietary_codecs = true
           fieldtrial_testing_like_official_build = true
           ARGSEOF
-          gn gen out/eterna_arm64
+          echo "=== args.gn ==="
+          cat /home/runner/chromium/src/out/eterna_arm64/args.gn
 
-      - name: Build Eterna Browser APK
+      - name: gn gen
         run: |
-          cd src
-          autoninja -C out/eterna_arm64 chrome_public_apk
+          cd /home/runner/chromium/src
+          export PATH="/home/runner/depot_tools:$PATH"
+          gn gen out/eterna_arm64 2>&1
+
+      - name: Build chrome_public_apk (arm64)
+        run: |
+          cd /home/runner/chromium/src
+          export PATH="/home/runner/depot_tools:$PATH"
+          autoninja -C out/eterna_arm64 chrome_public_apk 2>&1
+          echo "=== Build complete ==="
+          ls -lh out/eterna_arm64/apks/
 
       - name: Sign APK
         run: |
-          cd src/out/eterna_arm64/apks
+          APKS_DIR=/home/runner/chromium/src/out/eterna_arm64/apks
           jarsigner -verbose \
             -keystore /tmp/eterna.keystore \
             -storepass "${{ secrets.ETERNA_KEYSTORE_PASSWORD }}" \
             -keypass "${{ secrets.ETERNA_KEY_PASSWORD }}" \
-            ChromePublic.apk "${{ secrets.ETERNA_KEY_ALIAS }}"
-          zipalign -v 4 ChromePublic.apk EternaBrowser-arm64-v8a.apk
+            "${APKS_DIR}/ChromePublic.apk" "${{ secrets.ETERNA_KEY_ALIAS }}"
+          zipalign -v 4 \
+            "${APKS_DIR}/ChromePublic.apk" \
+            "${APKS_DIR}/EternaBrowser-arm64-v8a.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: eterna-browser-arm64-v8a
-          path: src/out/eterna_arm64/apks/EternaBrowser-arm64-v8a.apk
+          name: eterna-browser-arm64-v8a-${{ github.run_id }}
+          path: /home/runner/chromium/src/out/eterna_arm64/apks/EternaBrowser-arm64-v8a.apk
+          if-no-files-found: error
           retention-days: 30
 
       - name: Upload mapping files
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: eterna-mapping-files
-          path: src/out/eterna_arm64/lib.unstripped/
+          name: eterna-mapping-files-${{ github.run_id }}
+          path: /home/runner/chromium/src/out/eterna_arm64/lib.unstripped/
           retention-days: 30
