@@ -7015,11 +7015,15 @@ static_library("browser") {
       ]
     }
     allow_circular_includes_from += [
-      "//chrome/browser/apps/platform_apps",
-
-      # TODO(https://crbug.com/883570): platform_apps/api excluded on Android (web_modal assertion)
-
       "//chrome/browser/extensions",
+    ]
+    if (!is_android) {
+      allow_circular_includes_from += [
+        "//chrome/browser/apps/platform_apps",
+        "//chrome/browser/apps/platform_apps/api",
+      ]
+    }
+    allow_circular_includes_from += [
 
       # TODO(crbug.com/1200215): Remove cycles and simplify all dependencies.
       "//chrome/browser/web_applications/extensions",
