@@ -49,7 +49,7 @@ generate_grd("build_grd") {
     ]
   }
 
-  if (include_polymer || true) {
+  if (include_polymer) {
     public_deps += [
       "cr_components:build_grdp",
       "cr_components/app_management:build_grdp",
@@ -108,7 +108,7 @@ generate_grd("build_grd") {
     ]
   }
 
-  if (!is_android && !is_ios || true) {
+  if (!is_android && !is_ios) {
     public_deps += [
       "cr_components/color_change_listener:build_grdp",
       "//third_party/lottie:build_grdp",
@@ -149,7 +149,7 @@ group("closure_compile") {
     "js:closure_compile_modules",
   ]
 
-  if (include_polymer || true) {
+  if (include_polymer) {
     deps += [ "cr_elements:closure_compile" ]
 
     if (is_chromeos_ash) {
