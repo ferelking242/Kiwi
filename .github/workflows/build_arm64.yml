@@ -160,18 +160,26 @@ jobs:
         run: |
           KIWI="$GITHUB_WORKSPACE/kiwi_patches"
           CSRC="/home/runner/chromium/src"
-          for dir in apps base chrome components content extensions net remoting services third_party toolbox ui; do
+          PATCHED_DIRS="apps base chrome components content extensions net remoting services third_party toolbox ui"
+          for dir in $PATCHED_DIRS; do
             if [ -d "$KIWI/$dir" ]; then
               echo "-> Patching: $dir"
               cp -rf "$KIWI/$dir/." "$CSRC/$dir/"
             fi
           done
-          # Global fix: walk ALL BUILD.gn files and remove assert(!is_android).
-          # Kiwi Browser enables desktop WebUI features on Android. Each resource
-          # directory (downloads, webui_gallery, etc.) has assert(!is_android) or
-          # assert(!is_android && !is_ios). Walking the full tree removes them all.
+          # Kiwi Browser enables desktop WebUI features on Android, so some
+          # patched resource directories (downloads, webui_gallery, etc.) carry
+          # an assert(!is_android) or assert(!is_android && !is_ios) guard that
+          # needs to be removed. Only strip it from BUILD.gn files Kiwi actually
+          # patched -- walking the *entire* Chromium checkout also strips the
+          # guard from untouched, genuinely desktop-only code (e.g.
+          # apps/ui/views), which then fails later on an unrelated assertion
+          # (assert(toolkit_views)) once GN tries to build it for Android.
           python3 - << 'PYEOF'
           import os, re
+          KIWI = os.environ["GITHUB_WORKSPACE"] + "/kiwi_patches"
+          CSRC = "/home/runner/chromium/src"
+          PATCHED_DIRS = "apps base chrome components content extensions net remoting services third_party toolbox ui".split()
           # Match any assert(...) that contains !is_android, including combined forms
           # like assert(!is_android && !is_ios) or assert(!is_ios && !is_android).
           ASSERT_RE = re.compile(
@@ -179,23 +187,28 @@ jobs:
               re.MULTILINE,
           )
           count = 0
-          for root, dirs, files in os.walk('/home/runner/chromium/src'):
-              dirs[:] = [d for d in dirs if d not in ['.git', 'out']]
-              for fname in files:
-                  if fname == 'BUILD.gn':
-                      path = os.path.join(root, fname)
-                      try:
-                          with open(path) as f:
-                              content = f.read()
-                          if '!is_android' in content:
-                              nc = ASSERT_RE.sub('', content)
-                              if nc != content:
-                                  with open(path, 'w') as f:
-                                      f.write(nc)
-                                  count += 1
-                      except Exception:
-                          pass
-          print(f"Removed !is_android assertions from {count} BUILD.gn files")
+          for top in PATCHED_DIRS:
+              src_top = os.path.join(KIWI, top)
+              if not os.path.isdir(src_top):
+                  continue
+              for root, dirs, files in os.walk(src_top):
+                  dirs[:] = [d for d in dirs if d not in ('.git', 'out')]
+                  if 'BUILD.gn' not in files:
+                      continue
+                  rel = os.path.relpath(root, KIWI)
+                  path = os.path.join(CSRC, rel, 'BUILD.gn')
+                  try:
+                      with open(path) as f:
+                          content = f.read()
+                      if '!is_android' in content:
+                          nc = ASSERT_RE.sub('', content)
+                          if nc != content:
+                              with open(path, 'w') as f:
+                                  f.write(nc)
+                              count += 1
+                  except Exception:
+                      pass
+          print(f"Removed !is_android assertions from {count} BUILD.gn files (patched dirs only)")
           PYEOF
           echo "All Kiwi patches applied."
 
