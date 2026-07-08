@@ -136,7 +136,7 @@ template("chrome_extra_paks") {
       sources += invoker.additional_paks
     }
 
-    if (true) {
+    if (!is_android) {
       # New paks should be added here by default.
       sources += [
         "$root_gen_dir/chrome/access_code_cast_resources.pak",
@@ -351,7 +351,7 @@ template("chrome_extra_paks") {
       sources += [ "$root_gen_dir/chrome/webui_js_error_resources.pak" ]
       deps += [ "//chrome/browser/resources/webui_js_error:resources" ]
     }
-    if (!is_android && !is_chromeos_ash || true) {
+    if (!is_android && !is_chromeos_ash) {
       sources += [
         "$root_gen_dir/chrome/profile_picker_resources.pak",
         "$root_gen_dir/chrome/welcome_resources.pak",
