@@ -148,26 +148,6 @@ jobs:
                       except Exception:
                           pass
           print(f"Removed !is_android assertions from {count} BUILD.gn files")
-
-          # apps/ui/views is genuinely desktop-only (Chrome Apps window frame)
-          # and requires toolkit_views=true, which this Android build does not
-          # (and should not) set -- forcing it on breaks unrelated Android UI
-          # code. If Eterna's patches pull it in transitively (e.g. via a
-          # webui page's resource deps), drop that dependency edge here
-          # instead of trying to satisfy toolkit_views.
-          apps_ui_views_gn = '/home/runner/chromium/src/apps/ui/views/BUILD.gn'
-          if os.path.exists(apps_ui_views_gn):
-              with open(apps_ui_views_gn) as f:
-                  content = f.read()
-              guarded = (
-                  'if (!is_android && !is_ios) {\n'
-                  + '\n'.join('  ' + line if line.strip() else line for line in content.splitlines())
-                  + '\n}\n'
-              )
-              if 'if (!is_android && !is_ios) {' not in content:
-                  with open(apps_ui_views_gn, 'w') as f:
-                      f.write(guarded)
-                  print("Wrapped apps/ui/views/BUILD.gn in an Android/iOS guard (requires toolkit_views, not available on Android)")
           PYEOF
           echo "All Eterna patches applied."
 

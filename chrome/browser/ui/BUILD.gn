@@ -5490,7 +5490,12 @@ static_library("ui") {
 
     if (is_mac) {
       sources += [ "views/javascript_app_modal_event_blocker_mac.h" ]
-    } else {
+    } else if (!is_android) {
+      # apps/ui/views (Chrome Apps window frame) requires toolkit_views and
+      # is desktop-only. Eterna enables enable_extensions on Android, which
+      # pulls this branch in unconditionally upstream; Android doesn't have
+      # (or need) a views-based app modal event blocker, so skip it here
+      # instead of dragging in unbuildable desktop-only code.
       deps += [ "//apps/ui/views" ]
     }
 
