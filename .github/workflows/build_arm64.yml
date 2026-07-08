@@ -270,6 +270,33 @@ jobs:
               f.write(content)
           print("Patched gn_all: removed chrome/test:unit_tests from Android deps")
           PYEOF
+
+          # chrome/test:unit_tests (a test() target) is reachable from
+          # chrome_public_apk via the Android __build_config_crbug_908819
+          # mechanism. GN's android_apk/test templates create a
+          # *__build_config_crbug_908819 target for every APK, and that target
+          # needs a matching __build_config_crbug_908819 for each of its deps.
+          # //extensions:extensions_resources is a group() of grit() targets
+          # that never gets an Android build_config variant, so GN fails with
+          # "Unresolved dependencies" when unit_tests__apk is evaluated.
+          # Fix: remove the dep from chrome/test/BUILD.gn so the Android APK
+          # build config graph can be resolved cleanly.
+          python3 - << 'PYEOF'
+          path = '/home/runner/chromium/src/chrome/test/BUILD.gn'
+          with open(path) as f:
+              content = f.read()
+          target = '      "//extensions:extensions_resources",\n'
+          if target not in content:
+              raise SystemExit(
+                  "//extensions:extensions_resources dep not found in "
+                  "chrome/test/BUILD.gn — Chromium version may have changed "
+                  "this block's shape."
+              )
+          content = content.replace(target, '', 1)
+          with open(path, 'w') as f:
+              f.write(content)
+          print("Patched chrome/test/BUILD.gn: removed extensions_resources from unit_tests deps")
+          PYEOF
           echo "All Kiwi patches applied."
 
       # ----------------------------------------------------------------
