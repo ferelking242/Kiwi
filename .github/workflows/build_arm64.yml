@@ -213,30 +213,25 @@ jobs:
           path = '/home/runner/chromium/src/BUILD.gn'
           with open(path) as f:
               content = f.read()
-          old = '''  if (enable_extensions) {
-    deps += [
-      "//extensions:extensions_browsertests",
-      "//extensions:extensions_unittests",
-      "//extensions/browser/api/declarative_net_request/filter_list_converter",
-      "//extensions/shell:app_shell_unittests",
-    ]
-  }'''
-          new = '''  if (enable_extensions && !is_android) {
-    deps += [
-      "//extensions:extensions_browsertests",
-      "//extensions:extensions_unittests",
-      "//extensions/browser/api/declarative_net_request/filter_list_converter",
-      "//extensions/shell:app_shell_unittests",
-    ]
-  } else if (enable_extensions) {
-    deps += [
-      "//extensions/browser/api/declarative_net_request/filter_list_converter",
-    ]
-  }'''
-          if old not in content:
-              raise SystemExit("Could not find expected gn_all enable_extensions block in root BUILD.gn -- Chromium version may have changed this block's shape.")
+          marker = '"//extensions:extensions_browsertests"'
+          if marker not in content:
+              raise SystemExit("extensions_browsertests reference not found in root BUILD.gn -- Chromium version may have changed this block's shape.")
+          idx = content.index(marker)
+          if_marker = 'if (enable_extensions) {'
+          if_idx = content.rfind(if_marker, 0, idx)
+          if if_idx == -1 or idx - if_idx > 300:
+              raise SystemExit("Could not find enclosing 'if (enable_extensions)' block near extensions_browsertests in root BUILD.gn.")
+          close_idx = content.index('\n  }', idx)
+          extra = '\n  } else if (enable_extensions) {\n    deps += [\n      "//extensions/browser/api/declarative_net_request/filter_list_converter",\n    ]'
+          content = (
+              content[:if_idx]
+              + 'if (enable_extensions && !is_android) {'
+              + content[if_idx + len(if_marker):close_idx]
+              + extra
+              + content[close_idx:]
+          )
           with open(path, 'w') as f:
-              f.write(content.replace(old, new, 1))
+              f.write(content)
           print("Patched gn_all: excluded extensions test-only targets from Android")
           PYEOF
           echo "All Kiwi patches applied."
