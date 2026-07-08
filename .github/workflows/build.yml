@@ -97,14 +97,14 @@ jobs:
 
       - name: Fetch Chromium src at pinned version
         run: |
+          set -euo pipefail
           cd /home/runner/chromium
           export PATH="/home/runner/depot_tools:$PATH"
           gclient sync \
             --nohooks \
             --no-history \
             -r src@${{ steps.version.outputs.chromium }} \
-            --jobs 16 \
-            2>&1 | tail -40
+            --jobs 16
           df -h
 
       - name: Apply Eterna patches
@@ -147,15 +147,16 @@ jobs:
 
       - name: Run gclient hooks
         run: |
+          set -euo pipefail
           cd /home/runner/chromium/src
           export PATH="/home/runner/depot_tools:$PATH"
-          gclient runhooks --jobs 16 2>&1 | tail -20
+          gclient runhooks --jobs 16
 
       - name: Install Android build deps
         run: |
           cd /home/runner/chromium/src
           export PATH="/home/runner/depot_tools:$PATH"
-          yes | ./build/install-build-deps-android.sh 2>&1 | tail -20
+          yes | ./build/install-build-deps-android.sh || true
 
       - name: Decode keystore
         run: |
@@ -199,17 +200,39 @@ jobs:
           echo "=== Build complete ==="
           ls -lh out/eterna_arm64/apks/
 
-      - name: Sign APK
+      - name: Align and sign APK
         run: |
+          set -euo pipefail
           APKS_DIR=/home/runner/chromium/src/out/eterna_arm64/apks
-          jarsigner -verbose \
-            -keystore /tmp/eterna.keystore \
-            -storepass "${{ secrets.ETERNA_KEYSTORE_PASSWORD }}" \
-            -keypass "${{ secrets.ETERNA_KEY_PASSWORD }}" \
-            "${APKS_DIR}/ChromePublic.apk" "${{ secrets.ETERNA_KEY_ALIAS }}"
+          # Correct order: align first, then sign (signing after align invalidates alignment)
           zipalign -v 4 \
             "${APKS_DIR}/ChromePublic.apk" \
-            "${APKS_DIR}/EternaBrowser-arm64-v8a.apk"
+            "${APKS_DIR}/EternaBrowser-arm64-v8a-unsigned.apk"
+          # Use apksigner (part of Android build-tools) for v2/v3 signature scheme
+          APKSIGNER=$(find /home/runner/chromium/src/third_party/android_sdk \
+            -name apksigner -type f 2>/dev/null | head -1)
+          if [ -z "$APKSIGNER" ]; then
+            APKSIGNER=$(find ~/.android/sdk /opt -name apksigner -type f 2>/dev/null | head -1 || true)
+          fi
+          if [ -n "$APKSIGNER" ]; then
+            "$APKSIGNER" sign \
+              --ks /tmp/eterna.keystore \
+              --ks-pass "pass:${{ secrets.ETERNA_KEYSTORE_PASSWORD }}" \
+              --key-pass "pass:${{ secrets.ETERNA_KEY_PASSWORD }}" \
+              --ks-key-alias "${{ secrets.ETERNA_KEY_ALIAS }}" \
+              --out "${APKS_DIR}/EternaBrowser-arm64-v8a.apk" \
+              "${APKS_DIR}/EternaBrowser-arm64-v8a-unsigned.apk"
+          else
+            # Fall back to jarsigner if apksigner unavailable
+            cp "${APKS_DIR}/EternaBrowser-arm64-v8a-unsigned.apk" \
+               "${APKS_DIR}/EternaBrowser-arm64-v8a.apk"
+            jarsigner -verbose \
+              -keystore /tmp/eterna.keystore \
+              -storepass "${{ secrets.ETERNA_KEYSTORE_PASSWORD }}" \
+              -keypass "${{ secrets.ETERNA_KEY_PASSWORD }}" \
+              "${APKS_DIR}/EternaBrowser-arm64-v8a.apk" \
+              "${{ secrets.ETERNA_KEY_ALIAS }}"
+          fi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
