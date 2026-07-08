@@ -1265,7 +1265,7 @@ static_library("extensions") {
     ]
   }
 
-  if (is_linux || true) {
+  if (is_linux) {
     sources +=
         [ "api/image_writer_private/removable_storage_provider_linux.cc" ]
   }
