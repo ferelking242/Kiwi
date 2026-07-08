@@ -10,7 +10,6 @@ import("//tools/typescript/ts_library.gni")
 import("//ui/webui/resources/include_polymer.gni")
 import("//ui/webui/resources/tools/generate_grd.gni")
 
-include_polymer = true
 
 generate_grd("build_grd") {
   grd_prefix = "webui_generated"
