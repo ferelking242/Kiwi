@@ -4476,6 +4476,7 @@ static_library("browser") {
       "//components/user_notes/browser",
       "//components/user_notes/interfaces",
       "//components/user_notes/storage",
+      "//components/web_modal",
       "//courgette:courgette_lib",
       "//services/device/public/cpp/hid",
       "//third_party/content_analysis_sdk:liblcasdk",
@@ -7006,23 +7007,20 @@ static_library("browser") {
       "sync_file_system/task_logger.h",
     ]
     public_deps += [
+      "//chrome/browser/apps/platform_apps",
+
+      # TODO(https://crbug.com/883570): This is unfortunate, but not easy to
+      # fix. Ideally, //chrome/browser:browser shouldn't depend on these APIs
+      #(though the APIs likely will depend on //chrome/browser), but we need
+      # to pull them in here to allow registration of keyed services.
+      "//chrome/browser/apps/platform_apps/api",
       "//chrome/browser/extensions",
     ]
-    if (!is_android) {
-      public_deps += [
-        "//chrome/browser/apps/platform_apps",
-        "//chrome/browser/apps/platform_apps/api",
-      ]
-    }
     allow_circular_includes_from += [
+      "//chrome/browser/apps/platform_apps",
+      "//chrome/browser/apps/platform_apps/api",
       "//chrome/browser/extensions",
     ]
-    if (!is_android) {
-      allow_circular_includes_from += [
-        "//chrome/browser/apps/platform_apps",
-        "//chrome/browser/apps/platform_apps/api",
-      ]
-    }
     allow_circular_includes_from += [
 
       # TODO(crbug.com/1200215): Remove cycles and simplify all dependencies.
